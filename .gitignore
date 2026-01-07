@@ -1,0 +1,6 @@
+backend/.venv/
+backend/data/
+backend/server.log
+frontend/node_modules/
+frontend/dev.log
+.DS_Store
