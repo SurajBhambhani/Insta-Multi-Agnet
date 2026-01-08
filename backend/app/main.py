@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db import init_db
-from .routers import assets, content, decisions, exports, health, projects, settings
+from .routers import assets, content, decisions, exports, health, instagram, projects, settings
 
 
 def create_app() -> FastAPI:
@@ -22,6 +22,7 @@ def create_app() -> FastAPI:
     app.include_router(content.router)
     app.include_router(decisions.router)
     app.include_router(exports.router)
+    app.include_router(instagram.router)
     app.include_router(settings.router)
 
     @app.on_event("startup")

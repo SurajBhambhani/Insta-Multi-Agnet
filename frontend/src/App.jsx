@@ -22,6 +22,13 @@ function App() {
   const [openAiKey, setOpenAiKey] = useState("");
   const [savingKey, setSavingKey] = useState(false);
   const [keyStatus, setKeyStatus] = useState("");
+  const [igUserId, setIgUserId] = useState("");
+  const [igAccessToken, setIgAccessToken] = useState("");
+  const [igDryRun, setIgDryRun] = useState(true);
+  const [igStatus, setIgStatus] = useState("");
+  const [publishContentId, setPublishContentId] = useState("");
+  const [publishMediaUrl, setPublishMediaUrl] = useState("");
+  const [publishing, setPublishing] = useState(false);
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === activeProject),
@@ -153,6 +160,46 @@ function App() {
     }
   };
 
+  const saveInstagramSettings = async () => {
+    if (!igUserId.trim() || !igAccessToken.trim()) return;
+    const res = await fetch(`${API_BASE}/instagram/settings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ig_user_id: igUserId.trim(),
+        access_token: igAccessToken.trim(),
+        dry_run: igDryRun,
+      }),
+    });
+    if (res.ok) {
+      setIgStatus("Instagram settings saved.");
+      setIgAccessToken("");
+    } else {
+      setIgStatus("Could not save Instagram settings.");
+    }
+  };
+
+  const publishToInstagram = async () => {
+    if (!publishContentId || !publishMediaUrl.trim()) return;
+    setPublishing(true);
+    const res = await fetch(`${API_BASE}/instagram/publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content_item_id: publishContentId,
+        media_url: publishMediaUrl.trim(),
+        dry_run: igDryRun,
+      }),
+    });
+    setPublishing(false);
+    if (res.ok) {
+      const data = await res.json();
+      setIgStatus(`Instagram: ${data.status} (${data.message})`);
+    } else {
+      setIgStatus("Instagram publish failed. Check settings or URL.");
+    }
+  };
+
   return (
     <div className="app">
       <header className="hero">
@@ -222,6 +269,30 @@ function App() {
               {savingKey ? "Saving..." : "Save key"}
             </button>
             {keyStatus && <p className="status">{keyStatus}</p>}
+            <label>Instagram User ID</label>
+            <input
+              value={igUserId}
+              onChange={(event) => setIgUserId(event.target.value)}
+              placeholder="1789..."
+            />
+            <label>Instagram Access Token</label>
+            <input
+              type="password"
+              value={igAccessToken}
+              onChange={(event) => setIgAccessToken(event.target.value)}
+              placeholder="EAAG..."
+            />
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={igDryRun}
+                onChange={(event) => setIgDryRun(event.target.checked)}
+              />
+              Dry run (no post)
+            </label>
+            <button type="button" className="secondary" onClick={saveInstagramSettings}>
+              Save Instagram settings
+            </button>
           </div>
           <div>
             <label>Tone profile</label>
@@ -366,6 +437,43 @@ function App() {
           ) : (
             <div className="empty">Select a project to see packages.</div>
           )}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <h2>Instagram Publishing</h2>
+          <button onClick={publishToInstagram} disabled={publishing}>
+            {publishing ? "Publishing..." : "Publish Draft"}
+          </button>
+        </div>
+        <div className="panel-body split">
+          <div>
+            <label>Draft to publish</label>
+            <select
+              value={publishContentId}
+              onChange={(event) => setPublishContentId(event.target.value)}
+            >
+              <option value="">Select a draft</option>
+              {contentItems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.format.toUpperCase()} · {item.id.slice(0, 8)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Public media URL</label>
+            <input
+              value={publishMediaUrl}
+              onChange={(event) => setPublishMediaUrl(event.target.value)}
+              placeholder="https://public-url.com/image.jpg"
+            />
+            <p className="muted">
+              Instagram Graph API requires a publicly accessible media URL.
+            </p>
+          </div>
+          {igStatus && <p className="status">{igStatus}</p>}
         </div>
       </section>
     </div>

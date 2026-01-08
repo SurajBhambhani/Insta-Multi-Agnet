@@ -104,3 +104,31 @@ class LLMSettingsIn(BaseModel):
 class LLMSettingsOut(BaseModel):
     llm_provider: str
     openai_model: str
+
+
+class InstagramSettingsIn(BaseModel):
+    access_token: str
+    ig_user_id: str
+    app_id: Optional[str] = None
+    app_secret: Optional[str] = None
+    dry_run: bool = True
+
+
+class InstagramSettingsOut(BaseModel):
+    configured: bool
+    ig_user_id: str
+    dry_run: bool
+
+
+class InstagramPublishIn(BaseModel):
+    content_item_id: str
+    media_url: str
+    dry_run: bool = True
+
+
+class InstagramPublishOut(BaseModel):
+    status: str
+    post_id: Optional[str] = None
+    container_id: Optional[str] = None
+    message: str
+    used_media_url: Optional[str] = None
