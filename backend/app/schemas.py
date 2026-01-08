@@ -144,3 +144,23 @@ class TrendPackOut(BaseModel):
 class ContentSoundUpdate(BaseModel):
     content_item_id: str
     sound_id: str
+
+
+class MCPMessageIn(BaseModel):
+    thread_id: str
+    sender: str
+    recipient: str = "broadcast"
+    message: dict[str, Any]
+    confidence: float = 0.0
+    citations: list[str] = Field(default_factory=list)
+
+
+class MCPMessageOut(BaseModel):
+    id: str
+    thread_id: str
+    sender: str
+    recipient: str
+    message: dict[str, Any]
+    confidence: float
+    citations: list[str]
+    created_at: str

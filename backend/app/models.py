@@ -81,3 +81,16 @@ class Export(Base):
     format: Mapped[str] = mapped_column(String, default="instagram")
     specs: Mapped[str] = mapped_column(Text, default="{}")
     created_at: Mapped[str] = mapped_column(String, default=_now)
+
+
+class AgentMessage(Base):
+    __tablename__ = "agent_messages"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    thread_id: Mapped[str] = mapped_column(String, default="")
+    sender: Mapped[str] = mapped_column(String, default="")
+    recipient: Mapped[str] = mapped_column(String, default="broadcast")
+    message: Mapped[str] = mapped_column(Text, default="{}")
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    citations: Mapped[str] = mapped_column(Text, default="[]")
+    created_at: Mapped[str] = mapped_column(String, default=_now)

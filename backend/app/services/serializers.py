@@ -66,3 +66,16 @@ def export_out(item: models.Export) -> schemas.ExportOut:
         specs=load_json(item.specs, {}),
         created_at=item.created_at,
     )
+
+
+def mcp_message_out(item: models.AgentMessage) -> schemas.MCPMessageOut:
+    return schemas.MCPMessageOut(
+        id=item.id,
+        thread_id=item.thread_id,
+        sender=item.sender,
+        recipient=item.recipient,
+        message=load_json(item.message, {}),
+        confidence=item.confidence,
+        citations=load_json(item.citations, []),
+        created_at=item.created_at,
+    )
