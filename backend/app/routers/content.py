@@ -57,3 +57,20 @@ def generate_content(payload: schemas.GenerateDraftIn, db: Session = Depends(get
 def list_content(project_id: str, db: Session = Depends(get_db)):
     items = db.query(models.ContentItem).filter(models.ContentItem.project_id == project_id).all()
     return [content_out(item) for item in items]
+
+
+@router.post("/sound", response_model=schemas.ContentItemOut)
+def update_sound(payload: schemas.ContentSoundUpdate, db: Session = Depends(get_db)):
+    item = (
+        db.query(models.ContentItem)
+        .filter(models.ContentItem.id == payload.content_item_id)
+        .first()
+    )
+    if not item:
+        raise HTTPException(status_code=404, detail="Content item not found")
+
+    item.sound_id = payload.sound_id
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return content_out(item)

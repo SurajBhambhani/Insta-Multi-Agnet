@@ -28,7 +28,12 @@ function App() {
   const [igStatus, setIgStatus] = useState("");
   const [publishContentId, setPublishContentId] = useState("");
   const [publishMediaUrl, setPublishMediaUrl] = useState("");
+  const [publishMediaType, setPublishMediaType] = useState("image");
+  const [scheduleAt, setScheduleAt] = useState("");
   const [publishing, setPublishing] = useState(false);
+  const [trendPack, setTrendPack] = useState([]);
+  const [trendStatus, setTrendStatus] = useState("");
+  const [selectedSoundId, setSelectedSoundId] = useState("");
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === activeProject),
@@ -69,6 +74,7 @@ function App() {
     if (!activeProject) return;
     loadAssets(activeProject);
     loadContentItems(activeProject);
+    loadTrendPack(activeProject);
   }, [activeProject]);
 
   const createProject = async () => {
@@ -160,6 +166,52 @@ function App() {
     }
   };
 
+  const loadTrendPack = async (projectId) => {
+    if (!projectId) return;
+    const res = await fetch(`${API_BASE}/trend-pack?project_id=${projectId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setTrendPack(data.items || []);
+  };
+
+  const uploadTrendPack = async (event) => {
+    if (!activeProject) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append("project_id", activeProject);
+    form.append("file", file);
+    const res = await fetch(`${API_BASE}/trend-pack`, {
+      method: "POST",
+      body: form,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setTrendPack(data.items || []);
+      setTrendStatus(`Loaded ${data.count || 0} sounds.`);
+    } else {
+      setTrendStatus("Could not load Trend Pack.");
+    }
+  };
+
+  const assignSound = async () => {
+    if (!publishContentId || !selectedSoundId) return;
+    const res = await fetch(`${API_BASE}/content/sound`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content_item_id: publishContentId,
+        sound_id: selectedSoundId,
+      }),
+    });
+    if (res.ok) {
+      setTrendStatus("Sound assigned to draft.");
+      await loadContentItems(activeProject);
+    } else {
+      setTrendStatus("Failed to assign sound.");
+    }
+  };
+
   const saveInstagramSettings = async () => {
     if (!igUserId.trim() || !igAccessToken.trim()) return;
     const res = await fetch(`${API_BASE}/instagram/settings`, {
@@ -182,12 +234,15 @@ function App() {
   const publishToInstagram = async () => {
     if (!publishContentId || !publishMediaUrl.trim()) return;
     setPublishing(true);
+    const scheduled = scheduleAt ? Math.floor(new Date(scheduleAt).getTime() / 1000) : null;
     const res = await fetch(`${API_BASE}/instagram/publish`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         content_item_id: publishContentId,
         media_url: publishMediaUrl.trim(),
+        media_type: publishMediaType,
+        scheduled_publish_time: scheduled,
         dry_run: igDryRun,
       }),
     });
@@ -461,6 +516,14 @@ function App() {
                 </option>
               ))}
             </select>
+            <label>Media type</label>
+            <select
+              value={publishMediaType}
+              onChange={(event) => setPublishMediaType(event.target.value)}
+            >
+              <option value="image">Image</option>
+              <option value="reel">Reel / Video</option>
+            </select>
           </div>
           <div>
             <label>Public media URL</label>
@@ -472,8 +535,63 @@ function App() {
             <p className="muted">
               Instagram Graph API requires a publicly accessible media URL.
             </p>
+            <label>Schedule time (optional)</label>
+            <input
+              type="datetime-local"
+              value={scheduleAt}
+              onChange={(event) => setScheduleAt(event.target.value)}
+            />
           </div>
           {igStatus && <p className="status">{igStatus}</p>}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <h2>Trend Pack & Sound Picker</h2>
+          <label className="upload">
+            <input type="file" accept=".csv" onChange={uploadTrendPack} />
+            Import Trend Pack CSV
+          </label>
+        </div>
+        <div className="panel-body split">
+          <div>
+            <label>Pick sound for draft</label>
+            <select
+              value={selectedSoundId}
+              onChange={(event) => setSelectedSoundId(event.target.value)}
+            >
+              <option value="">Select a sound</option>
+              {trendPack.map((item, idx) => {
+                const title = item.title || item.sound || item.track || "Sound";
+                const artist = item.artist || item.creator || "";
+                const label = artist ? `${title} · ${artist}` : title;
+                const id = item.id || item.sound_id || `${label}-${idx}`;
+                return (
+                  <option key={id} value={label}>
+                    {label}
+                  </option>
+                );
+              })}
+            </select>
+            <button type="button" className="secondary" onClick={assignSound}>
+              Assign to Draft
+            </button>
+            {trendStatus && <p className="status">{trendStatus}</p>}
+          </div>
+          <div>
+            <label>Trend Pack Preview</label>
+            <div className="trend-list">
+              {trendPack.slice(0, 8).map((item, idx) => (
+                <div key={`${item.title}-${idx}`} className="trend-card">
+                  <strong>{item.title || item.sound || item.track || "Sound"}</strong>
+                  <span>{item.artist || item.creator || "Unknown artist"}</span>
+                  <span>{item.region || "global"}</span>
+                </div>
+              ))}
+              {!trendPack.length && <p className="muted">No trend pack uploaded yet.</p>}
+            </div>
+          </div>
         </div>
       </section>
     </div>

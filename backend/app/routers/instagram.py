@@ -56,6 +56,8 @@ def publish_instagram(payload: schemas.InstagramPublishIn, db: Session = Depends
         content_item,
         payload.media_url,
         dry_run_override=payload.dry_run,
+        media_type=payload.media_type,
+        scheduled_publish_time=payload.scheduled_publish_time,
     )
 
     if status == "error":

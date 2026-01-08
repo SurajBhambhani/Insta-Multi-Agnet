@@ -123,6 +123,8 @@ class InstagramSettingsOut(BaseModel):
 class InstagramPublishIn(BaseModel):
     content_item_id: str
     media_url: str
+    media_type: str = "image"
+    scheduled_publish_time: Optional[int] = None
     dry_run: bool = True
 
 
@@ -132,3 +134,13 @@ class InstagramPublishOut(BaseModel):
     container_id: Optional[str] = None
     message: str
     used_media_url: Optional[str] = None
+
+
+class TrendPackOut(BaseModel):
+    items: list[dict[str, Any]]
+    count: int
+
+
+class ContentSoundUpdate(BaseModel):
+    content_item_id: str
+    sound_id: str

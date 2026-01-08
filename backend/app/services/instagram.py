@@ -51,14 +51,27 @@ def create_media_container(
     access_token: str,
     media_url: str,
     caption: str,
+    media_type: str,
+    scheduled_publish_time: Optional[int],
 ) -> str:
+    payload = {
+        "caption": caption,
+        "access_token": access_token,
+    }
+
+    if media_type == "reel":
+        payload["media_type"] = "REELS"
+        payload["video_url"] = media_url
+    else:
+        payload["image_url"] = media_url
+
+    if scheduled_publish_time:
+        payload["scheduled_publish_time"] = str(scheduled_publish_time)
+        payload["published"] = "false"
+
     response = requests.post(
         f"{GRAPH_BASE}/{ig_user_id}/media",
-        data={
-            "image_url": media_url,
-            "caption": caption,
-            "access_token": access_token,
-        },
+        data=payload,
         timeout=30,
     )
     response.raise_for_status()
@@ -88,6 +101,8 @@ def publish_instagram_draft(
     item: models.ContentItem,
     media_url: str,
     dry_run_override: Optional[bool] = None,
+    media_type: str = "image",
+    scheduled_publish_time: Optional[int] = None,
 ) -> tuple[str, str, str, str]:
     valid, message, settings = validate_instagram_settings()
     if not valid:
@@ -103,12 +118,22 @@ def publish_instagram_draft(
     if dry_run:
         return "dry_run", "", "", "Dry run enabled, no post created"
 
-    container_id = create_media_container(ig_user_id, access_token, media_url, caption)
+    container_id = create_media_container(
+        ig_user_id,
+        access_token,
+        media_url,
+        caption,
+        media_type,
+        scheduled_publish_time,
+    )
     if not container_id:
         return "error", "", "", "Failed to create media container"
 
     post_id = publish_media(ig_user_id, access_token, container_id)
     if not post_id:
         return "error", "", container_id, "Failed to publish media"
+
+    if scheduled_publish_time:
+        return "scheduled", post_id, container_id, "Scheduled"
 
     return "published", post_id, container_id, "Published"

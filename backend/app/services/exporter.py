@@ -89,6 +89,7 @@ def create_export(
         "status": content_item.status,
         "captions": captions,
         "hashtags": hashtags,
+        "sound_id": content_item.sound_id,
         "on_screen_text": on_screen,
         "storyboard": content_item.storyboard,
         "sound": sound,

@@ -111,6 +111,22 @@ h1 {
   margin: 12px 0;
 }
 
+.trend-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trend-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: white;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .panel-body {
   display: grid;
   gap: 20px;
