@@ -6,6 +6,7 @@ from .ollama_client import query_ollama
 from .settings import load_settings
 
 logger = logging.getLogger("llm_service")
+logger.setLevel(logging.INFO)
 
 
 def _resolve_openai_key() -> str:

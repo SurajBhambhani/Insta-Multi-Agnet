@@ -39,6 +39,9 @@ function App() {
   const [trendPack, setTrendPack] = useState([]);
   const [trendStatus, setTrendStatus] = useState("");
   const [selectedSoundId, setSelectedSoundId] = useState("");
+  const [chatPrompt, setChatPrompt] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === activeProject),
@@ -252,6 +255,31 @@ function App() {
       await loadContentItems(activeProject);
     } else {
       setTrendStatus("Failed to assign sound.");
+    }
+  };
+
+  const sendOllamaPrompt = async () => {
+    if (!chatPrompt.trim()) return;
+    setChatLoading(true);
+    const res = await fetch(`${API_BASE}/ollama/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: chatPrompt.trim() }),
+    });
+    setChatLoading(false);
+    if (res.ok) {
+      const payload = await res.json();
+      setChatHistory((prev) => [
+        ...prev,
+        { prompt: chatPrompt.trim(), response: payload.response },
+      ]);
+      setChatPrompt("");
+    } else {
+      const detail = await res.text();
+      setChatHistory((prev) => [
+        ...prev,
+        { prompt: chatPrompt.trim(), response: `Error: ${detail}` },
+      ]);
     }
   };
 
@@ -477,6 +505,38 @@ function App() {
               {savingLlm ? "Saving…" : "Save LLM settings"}
             </button>
             {llmStatus && <p className="status">{llmStatus}</p>}
+          </div>
+          <div>
+            <h3>Ollama Chat</h3>
+            <textarea
+              rows={3}
+              value={chatPrompt}
+              onChange={(event) => setChatPrompt(event.target.value)}
+              placeholder="Ask Ollama about tones, captions, or hooks..."
+            />
+            <button
+              type="button"
+              className="secondary"
+              onClick={sendOllamaPrompt}
+              disabled={chatLoading}
+            >
+              {chatLoading ? "Asking..." : "Ask Ollama"}
+            </button>
+            <div className="chat-history">
+              {chatHistory.slice().reverse().map((entry, idx) => (
+                <article key={`${entry.prompt}-${idx}`}>
+                  <p>
+                    <strong>Prompt:</strong> {entry.prompt}
+                  </p>
+                  <p>
+                    <strong>Response:</strong> {entry.response}
+                  </p>
+                </article>
+              ))}
+              {!chatHistory.length && (
+                <p className="muted">No Ollama chat yet.</p>
+              )}
+            </div>
           </div>
         </div>
       </section>

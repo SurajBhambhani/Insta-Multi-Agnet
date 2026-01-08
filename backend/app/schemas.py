@@ -172,3 +172,12 @@ class MCPMessageOut(BaseModel):
     confidence: float
     citations: list[str]
     created_at: str
+
+
+class OllamaChatIn(BaseModel):
+    prompt: str
+
+
+class OllamaChatOut(BaseModel):
+    response: str
+    provider: str = "ollama"

@@ -5,6 +5,7 @@ import requests
 from requests.exceptions import RequestException
 
 logger = logging.getLogger("ollama_client")
+logger.setLevel(logging.INFO)
 
 
 def query_ollama(

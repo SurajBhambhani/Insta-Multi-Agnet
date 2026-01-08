@@ -139,9 +139,35 @@ h1 {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--stroke);
+  min-height: 82px;
   background: white;
   font-size: 13px;
   color: var(--muted);
+}
+
+.chat-history {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.chat-history article {
+  padding: 10px 12px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  font-size: 13px;
+}
+
+textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  padding: 10px 12px;
+  font-family: inherit;
 }
 
 .panel-body {
