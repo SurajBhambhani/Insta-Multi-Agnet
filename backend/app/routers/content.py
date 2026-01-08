@@ -53,6 +53,26 @@ def generate_content(payload: schemas.GenerateDraftIn, db: Session = Depends(get
     return content_out(item)
 
 
+@router.delete("/{content_id}", response_model=schemas.ContentItemOut)
+def delete_content(content_id: str, db: Session = Depends(get_db)):
+    item = db.query(models.ContentItem).filter(models.ContentItem.id == content_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Content item not found")
+
+    decisions = (
+        db.query(models.Decision)
+        .filter(models.Decision.content_item_id == content_id)
+        .all()
+    )
+    for decision in decisions:
+        db.delete(decision)
+
+    serialized = content_out(item)
+    db.delete(item)
+    db.commit()
+    return serialized
+
+
 @router.get("", response_model=list[schemas.ContentItemOut])
 def list_content(project_id: str, db: Session = Depends(get_db)):
     items = db.query(models.ContentItem).filter(models.ContentItem.project_id == project_id).all()

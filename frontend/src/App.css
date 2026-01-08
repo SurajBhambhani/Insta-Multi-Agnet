@@ -103,6 +103,23 @@ h1 {
   cursor: pointer;
 }
 
+.ghost {
+  border: 1px solid var(--stroke);
+  background: white;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border 0.2s ease;
+}
+
+.ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent-2);
+}
+
 .checkbox {
   display: flex;
   align-items: center;

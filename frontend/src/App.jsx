@@ -66,6 +66,29 @@ function App() {
     setContentItems(data);
   };
 
+  const deleteAsset = async (assetId) => {
+    if (!assetId || !activeProject) return;
+    const res = await fetch(`${API_BASE}/assets/${assetId}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      await loadAssets(activeProject);
+      if (selectedAssetId === assetId) {
+        setSelectedAssetId("");
+      }
+    }
+  };
+
+  const deleteContent = async (contentId) => {
+    if (!contentId || !activeProject) return;
+    const res = await fetch(`${API_BASE}/content/${contentId}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      await loadContentItems(activeProject);
+    }
+  };
+
   useEffect(() => {
     loadProjects();
   }, []);
@@ -425,6 +448,16 @@ function App() {
                 role="button"
                 tabIndex={0}
               >
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    deleteAsset(asset.id);
+                  }}
+                >
+                  Delete asset
+                </button>
                 <h3>{asset.type.toUpperCase()}</h3>
                 <p className="muted">{asset.path.split("/").slice(-1)}</p>
                 <div className="meta">
@@ -458,13 +491,20 @@ function App() {
           )}
           <div className="content-list">
             {contentItems.map((item) => (
-              <article key={item.id} className="content-card">
-                <div>
-                  <h3>{item.format.toUpperCase()}</h3>
-                  <p className="muted">Status: {item.status}</p>
-                </div>
-                <div className="caption-block">
-                  <p><strong>EN:</strong> {item.captions.en || ""}</p>
+            <article key={item.id} className="content-card">
+              <div>
+                <h3>{item.format.toUpperCase()}</h3>
+                <p className="muted">Status: {item.status}</p>
+              </div>
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => deleteContent(item.id)}
+              >
+                Delete draft
+              </button>
+              <div className="caption-block">
+                <p><strong>EN:</strong> {item.captions.en || ""}</p>
                   <p><strong>DE:</strong> {item.captions.de || ""}</p>
                   <p><strong>HI:</strong> {item.captions.hi || ""}</p>
                 </div>

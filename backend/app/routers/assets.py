@@ -5,6 +5,7 @@ from .. import models, schemas
 from ..deps import get_db
 from ..services.assets import ingest_uploads
 from ..services.serializers import asset_out
+from pathlib import Path
 
 router = APIRouter(prefix="/assets")
 
@@ -30,3 +31,19 @@ async def ingest_assets(
 def list_assets(project_id: str, db: Session = Depends(get_db)):
     assets = db.query(models.Asset).filter(models.Asset.project_id == project_id).all()
     return [asset_out(asset) for asset in assets]
+
+
+@router.delete("/{asset_id}", response_model=schemas.AssetOut)
+def delete_asset(asset_id: str, db: Session = Depends(get_db)):
+    asset = db.query(models.Asset).filter(models.Asset.id == asset_id).first()
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
+
+    path = Path(asset.path)
+    if path.exists():
+        path.unlink(missing_ok=True)
+
+    serialized = asset_out(asset)
+    db.delete(asset)
+    db.commit()
+    return serialized
