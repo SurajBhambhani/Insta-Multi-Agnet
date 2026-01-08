@@ -20,8 +20,13 @@ function App() {
   const [contentItems, setContentItems] = useState([]);
   const [selectedAssetId, setSelectedAssetId] = useState("");
   const [openAiKey, setOpenAiKey] = useState("");
-  const [savingKey, setSavingKey] = useState(false);
-  const [keyStatus, setKeyStatus] = useState("");
+  const [savingLlm, setSavingLlm] = useState(false);
+  const [llmStatus, setLlmStatus] = useState("");
+  const [llmProvider, setLlmProvider] = useState("openai");
+  const [ollamaEnabled, setOllamaEnabled] = useState(false);
+  const [ollamaHost, setOllamaHost] = useState("http://127.0.0.1:11434");
+  const [ollamaModel, setOllamaModel] = useState("llama3");
+  const [ollamaTemperature, setOllamaTemperature] = useState(0.7);
   const [igUserId, setIgUserId] = useState("");
   const [igAccessToken, setIgAccessToken] = useState("");
   const [igDryRun, setIgDryRun] = useState(true);
@@ -48,6 +53,17 @@ function App() {
     if (!activeProject && data.length) {
       setActiveProject(data[0].id);
     }
+  };
+
+  const loadLlmSettings = async () => {
+    const res = await fetch(`${API_BASE}/settings/llm`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setLlmProvider(data.llm_provider || "openai");
+    setOllamaEnabled(Boolean(data.ollama_enabled));
+    setOllamaHost(data.ollama_host || "http://127.0.0.1:11434");
+    setOllamaModel(data.ollama_model || "llama3");
+    setOllamaTemperature(data.ollama_temperature ?? 0.7);
   };
 
   const loadAssets = async (projectId) => {
@@ -91,6 +107,7 @@ function App() {
 
   useEffect(() => {
     loadProjects();
+    loadLlmSettings();
   }, []);
 
   useEffect(() => {
@@ -168,24 +185,27 @@ function App() {
     setToneProfile((prev) => ({ ...prev, [key]: Number(value) }));
   };
 
-  const saveOpenAiKey = async () => {
-    if (!openAiKey.trim()) return;
-    setSavingKey(true);
+  const saveLlmSettings = async () => {
+    setSavingLlm(true);
     const res = await fetch(`${API_BASE}/settings/llm`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        provider: "openai",
+        provider: llmProvider,
         api_key: openAiKey.trim(),
         model: "gpt-4o-mini",
+        ollama_enabled: ollamaEnabled,
+        ollama_host: ollamaHost,
+        ollama_model: ollamaModel,
+        ollama_temperature: Number(ollamaTemperature),
       }),
     });
-    setSavingKey(false);
+    setSavingLlm(false);
     if (res.ok) {
-      setKeyStatus("Saved. Pipeline will use ChatGPT for content.");
+      setLlmStatus("LLM settings saved.");
       setOpenAiKey("");
     } else {
-      setKeyStatus("Could not save key. Check backend logs.");
+      setLlmStatus("Could not save LLM settings.");
     }
   };
 
@@ -331,22 +351,6 @@ function App() {
                 </button>
               ))}
             </div>
-            <label>ChatGPT API key (optional)</label>
-            <input
-              type="password"
-              value={openAiKey}
-              onChange={(event) => setOpenAiKey(event.target.value)}
-              placeholder="sk-..."
-            />
-            <button
-              type="button"
-              className="secondary"
-              onClick={saveOpenAiKey}
-              disabled={savingKey}
-            >
-              {savingKey ? "Saving..." : "Save key"}
-            </button>
-            {keyStatus && <p className="status">{keyStatus}</p>}
             <label>Instagram User ID</label>
             <input
               value={igUserId}
@@ -414,6 +418,65 @@ function App() {
               <li>Hide children</li>
               <li>Optional location masking</li>
             </ul>
+          </div>
+          <div>
+            <label>LLM Provider</label>
+            <select
+              value={llmProvider}
+              onChange={(event) => setLlmProvider(event.target.value)}
+            >
+              <option value="openai">OpenAI (ChatGPT)</option>
+              <option value="ollama">Local Ollama</option>
+            </select>
+            <label>OpenAI API key</label>
+            <input
+              value={openAiKey}
+              onChange={(event) => setOpenAiKey(event.target.value)}
+              placeholder="sk-..."
+              disabled={llmProvider !== "openai"}
+            />
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={ollamaEnabled}
+                onChange={(event) => setOllamaEnabled(event.target.checked)}
+              />
+              Enable Ollama integration
+            </label>
+            <label>Ollama host</label>
+            <input
+              value={ollamaHost}
+              onChange={(event) => setOllamaHost(event.target.value)}
+              placeholder="http://127.0.0.1:11434"
+            />
+            <label>Ollama model</label>
+            <input
+              value={ollamaModel}
+              onChange={(event) => setOllamaModel(event.target.value)}
+              placeholder="llama3"
+            />
+            <label>Ollama temperature</label>
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.1"
+              value={ollamaTemperature}
+              onChange={(event) => setOllamaTemperature(Number(event.target.value))}
+            />
+            <p className="muted">
+              Start `ollama serve` locally (default port 11434) to unlock the
+              local provider.
+            </p>
+            <button
+              type="button"
+              className="secondary"
+              onClick={saveLlmSettings}
+              disabled={savingLlm}
+            >
+              {savingLlm ? "Saving…" : "Save LLM settings"}
+            </button>
+            {llmStatus && <p className="status">{llmStatus}</p>}
           </div>
         </div>
       </section>

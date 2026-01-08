@@ -1,6 +1,7 @@
 import os
 from typing import Any
 
+from .ollama_client import query_ollama
 from .settings import load_settings
 
 
@@ -21,6 +22,18 @@ def _resolve_openai_model() -> str:
 
 
 def generate_text(prompt: str, fallback: str) -> str:
+    settings = load_settings()
+    ollama = settings.get("ollama", {})
+    if settings.get("llm_provider") == "ollama" and ollama.get("enabled"):
+        content = query_ollama(
+            prompt,
+            host=ollama.get("host", "http://127.0.0.1:11434"),
+            model=ollama.get("model", "llama3"),
+            temperature=float(ollama.get("temperature", 0.7)),
+        )
+        if content:
+            return content
+
     api_key = _resolve_openai_key()
     if not api_key:
         return fallback

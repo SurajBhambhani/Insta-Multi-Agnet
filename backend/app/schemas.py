@@ -97,13 +97,21 @@ class DecisionOut(BaseModel):
 
 class LLMSettingsIn(BaseModel):
     provider: str = "openai"
-    api_key: str
+    api_key: str = ""
     model: str = "gpt-4o-mini"
+    ollama_enabled: bool = False
+    ollama_host: str = "http://127.0.0.1:11434"
+    ollama_model: str = "llama3"
+    ollama_temperature: float = 0.7
 
 
 class LLMSettingsOut(BaseModel):
     llm_provider: str
     openai_model: str
+    ollama_enabled: bool
+    ollama_host: str
+    ollama_model: str
+    ollama_temperature: float
 
 
 class InstagramSettingsIn(BaseModel):
