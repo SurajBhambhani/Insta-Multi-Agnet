@@ -1,8 +1,11 @@
+import logging
 import os
 from typing import Any
 
 from .ollama_client import query_ollama
 from .settings import load_settings
+
+logger = logging.getLogger("llm_service")
 
 
 def _resolve_openai_key() -> str:
@@ -25,6 +28,7 @@ def generate_text(prompt: str, fallback: str) -> str:
     settings = load_settings()
     ollama = settings.get("ollama", {})
     if settings.get("llm_provider") == "ollama" and ollama.get("enabled"):
+        logger.info("+ Ollama selected as provider")
         content = query_ollama(
             prompt,
             host=ollama.get("host", "http://127.0.0.1:11434"),
@@ -33,6 +37,7 @@ def generate_text(prompt: str, fallback: str) -> str:
         )
         if content:
             return content
+        logger.info("- Ollama returned no content, falling back")
 
     api_key = _resolve_openai_key()
     if not api_key:

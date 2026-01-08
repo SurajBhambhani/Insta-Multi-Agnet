@@ -1,6 +1,10 @@
+import logging
+from typing import Optional
+
 import requests
 from requests.exceptions import RequestException
-from typing import Optional
+
+logger = logging.getLogger("ollama_client")
 
 
 def query_ollama(
@@ -23,8 +27,12 @@ def query_ollama(
         if not choices:
             return None
         message = choices[0].get("message", {})
-        return message.get("content", "").strip()
+        content = message.get("content", "").strip()
+        logger.info("+ Ollama request succeeded")
+        return content
     except RequestException:
+        logger.warning("- Ollama request failed (network)")
         return None
     except Exception:
+        logger.warning("- Ollama request failed")
         return None
